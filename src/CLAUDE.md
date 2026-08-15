@@ -17,11 +17,22 @@ dotnet build SerializableDataTable.sln
 ```bash
 # Build the main library
 dotnet build SerializableDataTable/SerializableDataTables.csproj
+```
 
-# Build and run test programs
-dotnet run --project Test/Test.csproj
-dotnet run --project Test.Markdown/Test.Markdown.csproj
-dotnet run --project Test.MarkdownConverter/Test.MarkdownConverter.csproj
+### Running Tests
+
+Test cases are defined once in `Test.Shared` (the central source of truth) using
+[Touchstone](https://www.nuget.org/packages/Touchstone) descriptors, and exposed through three hosts:
+
+```bash
+# Touchstone CLI runner (colored tabular output; add "--results results.json" to export)
+dotnet run --project Test.Automated/Test.Automated.csproj --framework net8.0
+
+# xUnit adapter
+dotnet test Test.Xunit/Test.Xunit.csproj
+
+# NUnit adapter
+dotnet test Test.Nunit/Test.Nunit.csproj
 ```
 
 ### Package Management
@@ -53,28 +64,37 @@ dotnet pack SerializableDataTable/SerializableDataTables.csproj
 ### Project Structure
 
 - `SerializableDataTable/` - Main library project
-- `Test/` - Basic test console application demonstrating library usage
-- `Test.Markdown/` - Test application focusing on markdown conversion features
-- `Test.MarkdownConverter/` - Additional markdown conversion testing
+- `Test.Shared/` - Central source of truth for all test cases; Touchstone descriptors plus shared assertions
+- `Test.Automated/` - Touchstone CLI runner (console host)
+- `Test.Xunit/` - Touchstone xUnit adapter (`dotnet test`)
+- `Test.Nunit/` - Touchstone NUnit adapter (`dotnet test`)
 
 ### Dependencies
 
 - **System.Text.Json 8.0.5** - For JSON serialization (main library)
-- **SerializationHelper 1.0.3** - Used in test projects for JSON operations
+- **Touchstone 0.1.12** - Runner-agnostic test descriptor framework (test projects)
+- **Pgvector 0.3.2** - Used by `Test.Shared` to exercise custom-type reconstruction (no live database required)
 
 ## Testing
 
-Run test applications to verify functionality:
-```bash
-dotnet run --project Test/Test.csproj
-```
+All test cases live in `Test.Shared/SerializableDataTableScenarios.cs`. Each `public static`,
+parameterless method is one atomic test; `SerializableDataTableSuites` groups them into Touchstone
+suites by the prefix before the first underscore (e.g. `Markdown_...` → the "Markdown" suite). The
+same descriptor collection is run by all three hosts (CLI, xUnit, NUnit), so there is a single place
+to add or change coverage.
 
-The test program demonstrates:
-- DataTable to SerializableDataTable conversion
-- Round-trip conversion verification
-- Direct SerializableDataTable creation
-- Null value handling
-- Various data type support
+Coverage spans the entire public surface, positive and negative:
+- `SerializableColumn` validation and defaults
+- `ColumnValueTypeEnum` JSON string serialization
+- `SerializableDataTable` construction, `FromDataTable`, `ToDataTable`
+- All 20 data-type mappings and round-trips
+- Array type preservation and JSON round-trips (including backward compatibility without `OriginalType`)
+- Custom/unknown type reconstruction (Pgvector.Vector)
+- Null / DBNull handling
+- `MarkdownConverter` (all overloads, escaping, newline configuration, error cases)
+
+To add a test, add a `Prefix_CaseName()` method to `SerializableDataTableScenarios`; it is picked up
+automatically by every host.
 
 ## NuGet Package
 
