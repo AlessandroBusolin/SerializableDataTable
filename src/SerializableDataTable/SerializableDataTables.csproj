@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net10.0</TargetFrameworks>
-		<Version>1.0.6</Version>
+		<Version>1.1.0</Version>
 		<ApplicationIcon>assets\icon.ico</ApplicationIcon>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<DocumentationFile>SerializableDataTables.xml</DocumentationFile>
@@ -11,14 +11,14 @@
 		<Title>SerializableDataTable</Title>
 		<Authors>Joel Christner</Authors>
 		<Description>SerializableDataTable is a library providing an abstraction class that allows you to serialize and deserialize data to and from a DataTable instance.</Description>
-		<Copyright>(c)2025 Joel Christner</Copyright>
+		<Copyright>(c)2026 Joel Christner</Copyright>
 		<PackageProjectUrl>https://github.com/jchristn/SerializableDataTable</PackageProjectUrl>
 		<PackageIcon>icon.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<RepositoryUrl>https://github.com/jchristn/SerializableDataTable</RepositoryUrl>
 		<RepositoryType>github</RepositoryType>
 		<PackageTags>datatable datarow datacolumn json serializer serialization</PackageTags>
-		<PackageReleaseNotes>Initial release</PackageReleaseNotes>
+		<PackageReleaseNotes>Updated System.Text.Json to 10.0.11; fixed JSON round-trip of DateTimeOffset and byte[] scalar columns.</PackageReleaseNotes>
 		<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
 		<IncludeSymbols>True</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -51,7 +51,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="System.Text.Json" Version="8.0.5" />
+	  <PackageReference Include="System.Text.Json" Version="10.0.11" />
 	</ItemGroup>
 
 </Project>

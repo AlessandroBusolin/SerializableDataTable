@@ -167,6 +167,7 @@
                         throw new ArgumentException("No column exists with name '" + val.Key + "' as found in row " + i + ".");
 
                     object value = GetValue(val.Value, col.OriginalType);
+                    value = CoerceScalarValue(value, col.Type);
                     row[val.Key] = value ?? DBNull.Value;
                 }
 
@@ -331,6 +332,49 @@
 
             // No ToArray() method found, return original value
             return value;
+        }
+
+        private static object CoerceScalarValue(object value, ColumnValueTypeEnum columnType)
+        {
+            if (value == null) return null;
+
+            // Object columns carry arrays or custom reconstructed instances produced by GetValue;
+            // leave them untouched so array/custom-type handling is preserved.
+            if (columnType == ColumnValueTypeEnum.Object) return value;
+
+            // Byte arrays are serialized to JSON as Base64 strings; restore them explicitly.
+            if (columnType == ColumnValueTypeEnum.ByteArray)
+            {
+                if (value is byte[]) return value;
+                if (value is string base64)
+                {
+                    try
+                    {
+                        return System.Convert.FromBase64String(base64);
+                    }
+                    catch (FormatException)
+                    {
+                        return value;
+                    }
+                }
+                return value;
+            }
+
+            // Scalar columns: convert the JSON-derived value (string / long / decimal / double)
+            // to the column's target CLR type so types that DataTable cannot implicitly coerce
+            // from a string (for example DateTimeOffset) round-trip correctly.
+            Type targetType = ColumnValueTypeEnumToDataType(columnType);
+            if (targetType.IsInstanceOfType(value)) return value;
+
+            try
+            {
+                return ConvertToType(value, targetType);
+            }
+            catch
+            {
+                // Leave the value as-is and let DataTable surface any conversion error on assignment.
+                return value;
+            }
         }
 
         private static object GetValue(object obj, string originalType)

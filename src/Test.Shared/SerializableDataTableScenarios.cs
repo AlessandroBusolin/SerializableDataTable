@@ -755,9 +755,184 @@ namespace Test.Shared
             TestAssert.Equal(0, ((object[])value).Length);
         }
 
+        public static void Json_ExplicitTypedArrayColumnRoundTrip()
+        {
+            DataTable dt = new DataTable("T");
+            dt.Columns.Add("Values", typeof(int[]));
+            dt.Rows.Add(new object[] { new int[] { 10, 20, 30 } });
+            DataTable result = FullJsonRoundTrip(dt);
+            object value = result.Rows[0]["Values"];
+            TestAssert.True(value is int[], "Expected int[] restored from explicit typed-array column, got " + (value == null ? "null" : value.GetType().Name));
+            TestAssert.SequenceEqual(new int[] { 10, 20, 30 }, (int[])value);
+        }
+
+        #endregion
+
+        #region JSON scalar round-trips (full DataTable -> JSON -> DataTable)
+
+        public static void JsonScalar_StringRoundTrip()
+        {
+            DataTable back = ScalarJsonRoundTrip(typeof(string), "hello world");
+            TestAssert.Equal("hello world", (string)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_Int16RoundTrip()
+        {
+            DataTable back = ScalarJsonRoundTrip(typeof(short), (short)-12345);
+            TestAssert.Equal((short)-12345, (short)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_Int32RoundTrip()
+        {
+            DataTable back = ScalarJsonRoundTrip(typeof(int), 2147483647);
+            TestAssert.Equal(2147483647, (int)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_Int64RoundTrip()
+        {
+            DataTable back = ScalarJsonRoundTrip(typeof(long), 9223372036854775807L);
+            TestAssert.Equal(9223372036854775807L, (long)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_UInt16RoundTrip()
+        {
+            DataTable back = ScalarJsonRoundTrip(typeof(ushort), (ushort)65000);
+            TestAssert.Equal((ushort)65000, (ushort)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_UInt32RoundTrip()
+        {
+            DataTable back = ScalarJsonRoundTrip(typeof(uint), 4000000000U);
+            TestAssert.Equal(4000000000U, (uint)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_UInt64RoundTrip()
+        {
+            DataTable back = ScalarJsonRoundTrip(typeof(ulong), 18446744073709551615UL);
+            TestAssert.Equal(18446744073709551615UL, (ulong)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_DecimalRoundTrip()
+        {
+            DataTable back = ScalarJsonRoundTrip(typeof(decimal), 123456.789012m);
+            TestAssert.Equal(123456.789012m, (decimal)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_DoubleRoundTrip()
+        {
+            DataTable back = ScalarJsonRoundTrip(typeof(double), 3.14159265358979);
+            TestAssert.True(Math.Abs((double)back.Rows[0]["Col"] - 3.14159265358979) < 1e-9);
+        }
+
+        public static void JsonScalar_FloatRoundTrip()
+        {
+            DataTable back = ScalarJsonRoundTrip(typeof(float), 2.5f);
+            TestAssert.True(Math.Abs((float)back.Rows[0]["Col"] - 2.5f) < 1e-6f);
+        }
+
+        public static void JsonScalar_BooleanTrueRoundTrip()
+        {
+            DataTable back = ScalarJsonRoundTrip(typeof(bool), true);
+            TestAssert.Equal(true, (bool)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_BooleanFalseRoundTrip()
+        {
+            DataTable back = ScalarJsonRoundTrip(typeof(bool), false);
+            TestAssert.Equal(false, (bool)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_ByteRoundTrip()
+        {
+            DataTable back = ScalarJsonRoundTrip(typeof(byte), (byte)255);
+            TestAssert.Equal((byte)255, (byte)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_SByteRoundTrip()
+        {
+            DataTable back = ScalarJsonRoundTrip(typeof(sbyte), (sbyte)-128);
+            TestAssert.Equal((sbyte)-128, (sbyte)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_CharRoundTrip()
+        {
+            DataTable back = ScalarJsonRoundTrip(typeof(char), 'Z');
+            TestAssert.Equal('Z', (char)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_DateTimeRoundTrip()
+        {
+            DateTime original = new DateTime(2024, 6, 15, 14, 30, 45);
+            DataTable back = ScalarJsonRoundTrip(typeof(DateTime), original);
+            TestAssert.Equal(original, (DateTime)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_GuidRoundTrip()
+        {
+            Guid g = Guid.NewGuid();
+            DataTable back = ScalarJsonRoundTrip(typeof(Guid), g);
+            TestAssert.Equal(g, (Guid)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_DateTimeOffsetRoundTrip()
+        {
+            DateTimeOffset o = new DateTimeOffset(2024, 6, 15, 14, 30, 45, TimeSpan.FromHours(-5));
+            DataTable back = ScalarJsonRoundTrip(typeof(DateTimeOffset), o);
+            TestAssert.Equal(o, (DateTimeOffset)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_TimeSpanRoundTrip()
+        {
+            TimeSpan t = TimeSpan.FromHours(25.5);
+            DataTable back = ScalarJsonRoundTrip(typeof(TimeSpan), t);
+            TestAssert.Equal(t, (TimeSpan)back.Rows[0]["Col"]);
+        }
+
+        public static void JsonScalar_ByteArrayRoundTrip()
+        {
+            byte[] original = new byte[] { 1, 2, 3, 250, 255 };
+            DataTable dt = new DataTable("T");
+            dt.Columns.Add("Col", typeof(byte[]));
+            dt.Rows.Add(new object[] { original });
+            DataTable back = FullJsonRoundTrip(dt);
+            object value = back.Rows[0]["Col"];
+            TestAssert.True(value is byte[], "Expected byte[] restored from Base64 JSON, got " + (value == null ? "null" : value.GetType().Name));
+            TestAssert.SequenceEqual(original, (byte[])value);
+        }
+
+        public static void JsonScalar_NullScalarRoundTripsAsDBNull()
+        {
+            DataTable dt = new DataTable("T");
+            dt.Columns.Add("Col", typeof(int));
+            dt.Rows.Add(DBNull.Value);
+            DataTable back = FullJsonRoundTrip(dt);
+            TestAssert.Equal(DBNull.Value, back.Rows[0]["Col"]);
+        }
+
         #endregion
 
         #region Pgvector / unknown custom type reconstruction (no live database required)
+
+        public static void CustomObject_JsonObjectReconstructedViaOriginalType()
+        {
+            DataTable dt = new DataTable("T");
+            dt.Columns.Add("Id", typeof(int));
+            dt.Columns.Add("Point", typeof(SamplePoint));
+            dt.Rows.Add(1, new SamplePoint { X = 3, Y = 7 });
+
+            SerializableDataTable sdt = SerializableDataTable.FromDataTable(dt);
+            SerializableColumn col = sdt.Columns.First(c => c.Name == "Point");
+            TestAssert.Equal(ColumnValueTypeEnum.Object, col.Type);
+            TestAssert.NotNull(col.OriginalType);
+            TestAssert.Contains(col.OriginalType, "Test.Shared.SamplePoint");
+
+            DataTable result = FullJsonRoundTrip(dt);
+            object value = result.Rows[0]["Point"];
+            TestAssert.True(value is SamplePoint, "Expected SamplePoint reconstructed from JSON object, got " + (value == null ? "null" : value.GetType().Name));
+            SamplePoint point = (SamplePoint)value;
+            TestAssert.Equal(3, point.X);
+            TestAssert.Equal(7, point.Y);
+        }
 
         public static void Pgvector_ColumnMapsToObjectWithOriginalType()
         {
@@ -987,6 +1162,14 @@ namespace Test.Shared
             sdt.Columns.Add(new SerializableColumn { Name = "V", Type = ColumnValueTypeEnum.String });
             sdt.Rows.Add(new Dictionary<string, object> { { "V", "x" } });
             TestAssert.Throws<ArgumentOutOfRangeException>(() => MarkdownConverter.ConvertRow(sdt, 1));
+        }
+
+        public static void Markdown_ConvertRowSerializableDataTableNegativeIndexThrows()
+        {
+            SerializableDataTable sdt = new SerializableDataTable("T");
+            sdt.Columns.Add(new SerializableColumn { Name = "V", Type = ColumnValueTypeEnum.String });
+            sdt.Rows.Add(new Dictionary<string, object> { { "V", "x" } });
+            TestAssert.Throws<ArgumentOutOfRangeException>(() => MarkdownConverter.ConvertRow(sdt, -1));
         }
 
         public static void Markdown_ByteArrayRenderedAsBase64DataTable()
@@ -1222,6 +1405,14 @@ namespace Test.Shared
             string json = JsonSerializer.Serialize(sdt);
             SerializableDataTable back = JsonSerializer.Deserialize<SerializableDataTable>(json);
             return back.ToDataTable();
+        }
+
+        private static DataTable ScalarJsonRoundTrip(Type clrType, object value)
+        {
+            DataTable dt = new DataTable("T");
+            dt.Columns.Add("Col", clrType);
+            dt.Rows.Add(value);
+            return FullJsonRoundTrip(dt);
         }
 
         private static DataTable BuildVectorDataTable()
